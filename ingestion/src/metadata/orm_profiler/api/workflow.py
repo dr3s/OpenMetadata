@@ -145,7 +145,7 @@ class ProfilerWorkflow:
                 table_config
                 for table_config in self.profiler_config.tableConfig
                 if table_config.fullyQualifiedName.__root__
-                == entity.fullyQualifiedName.__root__
+                   == entity.fullyQualifiedName.__root__
             ),
             None,
         )
@@ -219,32 +219,22 @@ class ProfilerWorkflow:
             return entity_config.partitionConfig
 
         if entity.tablePartition:
-            if entity.tablePartition.intervalType in {
-                IntervalType.TIME_UNIT,
-                IntervalType.INGESTION_TIME,
-            }:
-                try:
+            try:
+                if entity.tablePartition.intervalType == IntervalType.TIME_UNIT:
                     partition_field = entity.tablePartition.columns[0]
-                except Exception:
-                    raise TypeError(
-                        "Unsupported ingestion based partition type. Skipping table"
-                    )
-
+                elif entity.tablePartition.intervalType == IntervalType.INGESTION_TIME:
+                    partition_field = "_PARTITIONTIME"
                 return TablePartitionConfig(
                     partitionField=partition_field,
                 )
-
-            raise TypeError(
-                f"Unsupported partition type {entity.tablePartition.intervalType}. Skipping table"
-            )
-
-        return None
+            except Exception:
+                raise TypeError(f"Unsupported partition type {entity.tablePartition.intervalType}. Skipping table")
 
     def create_profiler_interface(
-        self,
-        service_connection_config,
-        table_entity: Table,
-        sqa_metadata_obj: Optional[MetaData] = None,
+            self,
+            service_connection_config,
+            table_entity: Table,
+            sqa_metadata_obj: Optional[MetaData] = None,
     ):
         """Creates a profiler interface object"""
         return SQAInterface(
@@ -265,7 +255,7 @@ class ProfilerWorkflow:
         )
 
     def create_profiler_obj(
-        self, table_entity: Table, profiler_interface: SQAInterface
+            self, table_entity: Table, profiler_interface: SQAInterface
     ):
         """Profile a single entity"""
         if not self.profiler_config.profiler:
@@ -291,8 +281,8 @@ class ProfilerWorkflow:
     def filter_databases(self, database: Database) -> Optional[Database]:
         """Returns filtered database entities"""
         if filter_by_database(
-            self.source_config.databaseFilterPattern,
-            database.name.__root__,
+                self.source_config.databaseFilterPattern,
+                database.name.__root__,
         ):
             self.source_status.filter(
                 database.name.__root__, "Database pattern not allowed"
@@ -311,8 +301,8 @@ class ProfilerWorkflow:
         for table in tables:
             try:
                 if filter_by_schema(
-                    self.source_config.schemaFilterPattern,
-                    table.databaseSchema.name,
+                        self.source_config.schemaFilterPattern,
+                        table.databaseSchema.name,
                 ):
                     self.source_status.filter(
                         f"Schema pattern not allowed: {table.fullyQualifiedName.__root__}",
@@ -320,8 +310,8 @@ class ProfilerWorkflow:
                     )
                     continue
                 if filter_by_table(
-                    self.source_config.tableFilterPattern,
-                    table.name.__root__,
+                        self.source_config.tableFilterPattern,
+                        table.name.__root__,
                 ):
                     self.source_status.filter(
                         f"Table pattern not allowed: {table.fullyQualifiedName.__root__}",
@@ -388,11 +378,11 @@ class ProfilerWorkflow:
             self.config.source.serviceConnection.__root__.config
         )
         if hasattr(
-            self.config.source.serviceConnection.__root__.config,
-            "supportsDatabase",
+                self.config.source.serviceConnection.__root__.config,
+                "supportsDatabase",
         ):
             if hasattr(
-                self.config.source.serviceConnection.__root__.config, "database"
+                    self.config.source.serviceConnection.__root__.config, "database"
             ):
                 copy_service_connection_config.database = database.name.__root__
             if hasattr(self.config.source.serviceConnection.__root__.config, "catalog"):
@@ -467,16 +457,16 @@ class ProfilerWorkflow:
             click.echo()
 
         if (
-            self.source_status.failures
-            or self.status.failures
-            or (hasattr(self, "sink") and self.sink.get_status().failures)
+                self.source_status.failures
+                or self.status.failures
+                or (hasattr(self, "sink") and self.sink.get_status().failures)
         ):
             click.secho("Workflow finished with failures", fg="bright_red", bold=True)
             return 1
         if (
-            self.source_status.warnings
-            or self.status.failures
-            or (hasattr(self, "sink") and self.sink.get_status().warnings)
+                self.source_status.warnings
+                or self.status.failures
+                or (hasattr(self, "sink") and self.sink.get_status().warnings)
         ):
             click.secho("Workflow finished with warnings", fg="yellow", bold=True)
             return 0
